@@ -304,6 +304,9 @@ class BipedCfgPF(BaseConfig):
         randomize_imu_offset = True
         randomize_imu_offset_range = [-1.2, 1.2]
         delay_ms_range = [0, 20]
+        
+        randomize_step_delay = False
+        max_step_delay_time = 0.015
 
     class rewards:
         class scales:
