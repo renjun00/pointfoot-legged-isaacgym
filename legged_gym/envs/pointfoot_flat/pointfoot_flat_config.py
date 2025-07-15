@@ -180,6 +180,8 @@ class BipedCfgPF(BaseConfig):
         heading_command = True  # if true: compute ang vel command from heading error, only work on adaptive group
         min_norm = 0.1
         zero_command_prob = 0.0
+        #
+        beta = 1.0
 
         class ranges:
             lin_vel_x = [-1.0, 1.0]  # min max [m/s]
@@ -244,8 +246,8 @@ class BipedCfgPF(BaseConfig):
         }  # [N*m*s/rad]
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
-        #user_torque_limit = 80.0
-        #max_power = 1000.0  # [W]
+        user_torque_limit = 80.0
+        max_power = 1000.0  # [W]
 
     class asset:
         file = "{}/resources/robots/{}/urdf/robot.urdf".format(LEGGED_GYM_ROOT_DIR, robot_type)
