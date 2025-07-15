@@ -34,33 +34,112 @@ import os
 robot_type = os.getenv("ROBOT_TYPE")
 
 class BipedCfgPF(BaseConfig):
+    #
+    class depth:
+        use_camera = False
+        use_student = False
+        use_warp = False
+        camera_num_envs = 192
+        camera_terrain_num_rows = 10
+        camera_terrain_num_cols = 20
+
+        position2 = [0.12043, 0.0322, -0.11186]  # front camera
+        position1 = [0.08043, 0.0122, -0.09186]  # front camera
+        angle = [1.043778179, 1.083778179]  # positive pitch down
+
+        update_interval = 2  # 5 works without retraining, 8 worse
+
+        original = (87, 58)
+        resized = (87, 58)
+        horizontal_fov = [86,88]#[86,88]
+        buffer_len = 5
+        
+        near_clip = 0.0
+        far_clip = 3.0
+        dis_noise = 0.01
+        
+        scale = 1
+        invert = True
     class env:
         num_envs = 8192
         num_observations = 30
-        num_critic_observations = 3 + num_observations
-        num_height_samples = 117
+        #num_critic_observations = 3 + num_observations
+        num_height_samples = 11**2 #117
+        num_privileged_obs=num_observations + num_height_samples
         num_actions = 6
         env_spacing = 3.0  # not used with heightfields/trimeshes
         send_timeouts = True  # send time out information to the algorithm
         episode_length_s = 20  # episode length in seconds
         obs_history_length = 10  # number of observations stacked together
-        dof_vel_use_pos_diff = True
-        fail_to_terminal_time_s = 0.5
+        #dof_vel_use_pos_diff = True
+        #fail_to_terminal_time_s = 0.5
+
+ #added   
+        measure_lin_vel_critic = True
+        
+        measure_feet_height_critic = True
+        measure_base_height_critic = True
+        measure_contact_force_critic = False
+        measure_contact_filt_critic = True
+        measure_friction_coeff_critic = True   
+        measure_step_delay = True #False
+        measure_restitutions_critic = True#False
+        measure_gravityoffset_critic = False
+        measure_motor_strength = True
+        measure_motor_offset_critic = False
+        measure_terrain_type_critic = False
+        measure_link_mass_critic = True
+        measure_target_height_critic = False
+        measure_target_feet_height_critic = False
+
+        if(measure_lin_vel_critic):
+            num_privileged_obs += 3
+        if(measure_contact_force_critic):
+            num_privileged_obs += 3*2
+        
+        if(measure_contact_filt_critic):
+            num_privileged_obs += 2
+        if(measure_feet_height_critic):
+            num_privileged_obs += 2
+        if(measure_base_height_critic):
+            num_privileged_obs += 1
+        if(measure_friction_coeff_critic):
+            num_privileged_obs += 1
+        if(measure_step_delay):
+            num_privileged_obs += 1
+        if(measure_restitutions_critic):
+            num_privileged_obs += 1
+        if(measure_gravityoffset_critic):
+            num_privileged_obs += 3
+        if(measure_motor_strength):
+            num_privileged_obs += 12
+        if(measure_motor_offset_critic):
+            num_privileged_obs += 6
+        if(measure_terrain_type_critic):
+            num_privileged_obs += 1
+        if(measure_link_mass_critic):
+            num_privileged_obs += 9
+        if(measure_target_height_critic):
+            num_privileged_obs += 1
+        if(measure_target_feet_height_critic):
+            num_privileged_obs += 2
+
+        filtered_imu = False
+        filtered_alpha = 1.0
 
     class terrain:
-        mesh_type = "plane"  # "heightfield" # none, plane, heightfield or trimesh
+        mesh_type = "trimesh"  # "heightfield" # none, plane, heightfield or trimesh#plane
         horizontal_scale = 0.1  # [m]
         vertical_scale = 0.005  # [m]
         border_size = 25  # [m]
         curriculum = True
         static_friction = 0.4
-        dynamic_friction = 0.4
+        dynamic_friction = 0.6 #0.4
         restitution = 0.8
         # rough terrain only:
         measure_heights = False
         critic_measure_heights = True
         measured_points_x = [
-            -0.6,
             -0.5,
             -0.4,
             -0.3,
@@ -71,33 +150,32 @@ class BipedCfgPF(BaseConfig):
             0.2,
             0.3,
             0.4,
-            0.5,
-            0.6,
-        ]  # 1mx1.6m rectangle (without center line)
-        measured_points_y = [-0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4]
+            0.5,     
+        ]  # 1mx1m rectangle (without center line)
+        measured_points_y = [-0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
         selected = False  # select a unique terrain type and pass all arguments
         terrain_kwargs = None  # Dict of arguments for selected terrain
-        max_init_terrain_level = 5 + 4  # starting curriculum state
+        max_init_terrain_level = 5   # starting curriculum state #5+4
         terrain_length = 8.0
         terrain_width = 8.0
         num_rows = 10  # number of terrain rows (levels)
         num_cols = 20  # number of terrain cols (types)
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
-        terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
+        terrain_proportions = [0.2, 0.2, 0.2, 0.2, 0.2] #[0.1, 0.1, 0.35, 0.25, 0.2]
         # trimesh only:
         slope_treshold = (
             0.75  # slopes above this threshold will be corrected to vertical surfaces
         )
 
     class commands:
-        curriculum = True
+        curriculum = True   #
         smooth_max_lin_vel_x = 2.0
         smooth_max_lin_vel_y = 1.0
         non_smooth_max_lin_vel_x = 1.0
         non_smooth_max_lin_vel_y = 1.0
         max_ang_vel_yaw = 3.0
         curriculum_threshold = 0.75
-        num_commands = 3  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
+        num_commands = 4  # 3  default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
         resampling_time = 5.0  # time before command are changed[s]
         heading_command = True  # if true: compute ang vel command from heading error, only work on adaptive group
         min_norm = 0.1
@@ -166,8 +244,8 @@ class BipedCfgPF(BaseConfig):
         }  # [N*m*s/rad]
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
-        user_torque_limit = 80.0
-        max_power = 1000.0  # [W]
+        #user_torque_limit = 80.0
+        #max_power = 1000.0  # [W]
 
     class asset:
         file = "{}/resources/robots/{}/urdf/robot.urdf".format(LEGGED_GYM_ROOT_DIR, robot_type)
@@ -282,14 +360,22 @@ class BipedCfgPF(BaseConfig):
             height_measurements = 5.0
             contact_forces = 0.01
             torque = 0.05
-
+            #
+            gravity=1.0
+            contact_force=1.0
+            friction_coeff=1.0
+            conatact_filt=1.0
+            feet_height=1.0
+            base_height=1.0
+            
         clip_observations = 100.0
         clip_actions = 100.0
 
     class noise:
         add_noise = True
         noise_level = 1.5  # scales other values
-
+        #
+        add_pri_noise=True
         class noise_scales:
             dof_pos = 0.01
             dof_vel = 1.5
@@ -297,6 +383,14 @@ class BipedCfgPF(BaseConfig):
             ang_vel = 0.2
             gravity = 0.05
             height_measurements = 0.1
+
+    #
+            contact_force = 0.
+            friction_coeff = 0.
+            contact_filt = 0.
+            feet_height = 0.0
+            base_height = 0.0
+
 
     # viewer camera:
     class viewer:
@@ -386,3 +480,14 @@ class BipedCfgPPOPF(BaseConfig):
         load_run = "-1"  # -1 = last run
         checkpoint = -1  # -1 = last saved model
         resume_path = "None"  # updated from load_run and chkpt
+        #
+        use_depth = PointFootRoughCfg.depth.use_camera
+        use_student = PointFootRoughCfg.depth.use_student
+
+    class depth_encoder:
+        if_depth = PointFootRoughCfg.depth.use_camera
+        depth_shape = PointFootRoughCfg.depth.resized
+        buffer_len = PointFootRoughCfg.depth.buffer_len
+        hidden_dims = 512
+        learning_rate = 1.e-3
+        num_steps_per_env = PointFootRoughCfg.depth.update_interval * 24
